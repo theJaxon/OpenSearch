@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: opensearch-dashboard
+  labels:
+    app: opensearch
+    component: dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: opensearch
+      component: dashboard
+  template:
+    metadata:
+      labels:
+        app: opensearch
+        component: dashboard
+    spec:
+      containers:
+      - name: opensearch-dashboard
+        image: opensearchproject/opensearch-dashboards:2.12.0
+        ports:
+          - containerPort: 5601
+            name: ui
+        env:
+          - name: OPENSEARCH_HOSTS
+            value: "http://opensearch:9200"
+          - name: DISABLE_INSTALL_DEMO_CONFIG
+            value: "true"
+          - name: DISABLE_SECURITY_DASHBOARDS_PLUGIN
+            value: "true"
+          # https://opensearch.org/docs/latest/ml-commons-plugin/ml-dashboard/
+          - name: ml_commons_dashboards.enabled
+            value: "true"
