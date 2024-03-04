@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: opensearch-ml
+  labels:
+    app: opensearch
+    role: ml
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: opensearch
+      role: ml
+  template:
+    metadata:
+      labels:
+        app: opensearch
+        role: ml
+    spec:
+      initContainers:
+      - name: init-sysctl
+        image: busybox:latest
+        command:
+        - sysctl
+        - -w
+        - vm.max_map_count=262144
+        securityContext:
+          privileged: true
+      volumes:
+      containers:
+        - name: opensearch-ml
+          image: opensearchproject/opensearch:2.12.0
+          imagePullPolicy: IfNotPresent
+          env:
+          - name: network.host
+            value: "0.0.0.0"
+          - name: cluster.name
+            value: "opensearch-cluster"
+          - name: node.name
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: ES_JAVA_OPTS
+            value: -Xms512m -Xmx512m
+          - name: node.roles
+            value: "ml"
+          - name: cluster.initial_cluster_manager_nodes
+            value: "opensearch-manager-0"
+          - name: discovery.seed_hosts
+            value: "opensearch"
+          - name: plugins.security.disabled
+            value: "true"
+          - name: DISABLE_INSTALL_DEMO_CONFIG
+            value: "true"
+          ports:
+            - containerPort: 9200
+              name: http
+            - containerPort: 9300
+              name: transport
